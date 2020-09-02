@@ -10,10 +10,7 @@ else
 	@echo
 endif
 
-JAVA_OR_TOOLS_LIBS= $(LIB_DIR)/com.google.ortools$J
-JAVA_OR_TOOLS_NATIVE_LIBS := $(LIB_DIR)/$(LIB_PREFIX)jniortools.$(JNI_LIB_EXT)
-JAVAFLAGS = -Djava.library.path=$(LIB_DIR)
-
+# Check for required build tools
 HAS_JAVA = true
 ifndef JAVAC_BIN
 HAS_JAVA =
@@ -54,6 +51,11 @@ package_java: java
 BUILT_LANGUAGES +=, Java
 endif
 
+
+# All libraries and dependencies
+JAVA_OR_TOOLS_LIBS := $(LIB_DIR)/com.google.ortools$J
+JAVA_OR_TOOLS_NATIVE_LIBS := $(LIB_DIR)/$(LIB_PREFIX)jniortools.$(JNI_LIB_EXT)
+JAVAFLAGS := -Djava.library.path=$(LIB_DIR)
 $(GEN_DIR)/java/com/google/ortools/algorithms:
 	-$(MKDIR_P) $(GEN_PATH)$Sjava$Scom$Sgoogle$Sortools$Salgorithms
 
