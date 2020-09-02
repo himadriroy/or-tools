@@ -25,6 +25,8 @@ ifndef MVN_BIN
 HAS_JAVA =
 endif
 
+TEMP_JAVA_DIR = temp_java
+
 # Main target
 .PHONY: java # Build Java OR-Tools.
 .PHONY: test_java # Test Java OR-Tools using various examples.
@@ -46,16 +48,33 @@ else
 java: $(JAVA_OR_TOOLS_LIBS)
 check_java: check_java_pimpl
 test_java: test_java_pimpl
-package_java: java
-	@echo NOT IMPLEMENTED
+package_java: package_java_pimpl
 BUILT_LANGUAGES +=, Java
 endif
 
+# Detect RuntimeIDentifier
+ifeq ($(OS),Windows)
+NATIVE_IDENTIFIER=win32-x86-64
+else
+  ifeq ($(OS),Linux)
+  NATIVE_IDENTIFIER=linux-x86-64
+  else
+    ifeq ($(OS),Darwin)
+    NATIVE_IDENTIFIER=darwin
+    else
+    $(error OS unknown !)
+    endif
+  endif
+endif
 
 # All libraries and dependencies
 JAVA_OR_TOOLS_LIBS := $(LIB_DIR)/com.google.ortools$J
 JAVA_OR_TOOLS_NATIVE_LIBS := $(LIB_DIR)/$(LIB_PREFIX)jniortools.$(JNI_LIB_EXT)
 JAVAFLAGS := -Djava.library.path=$(LIB_DIR)
+JAVA_ORTOOLS_PACKAGE := com.google.ortools
+JAVA_ORTOOLS_NATIVE_PROJECT := ortools-$(NATIVE_IDENTIFIER)
+JAVA_ORTOOLS_PROJECT := ortools-java
+
 $(GEN_DIR)/java/com/google/ortools/algorithms:
 	-$(MKDIR_P) $(GEN_PATH)$Sjava$Scom$Sgoogle$Sortools$Salgorithms
 
@@ -596,6 +615,68 @@ clean_java:
 	-$(DEL) $(OBJ_DIR)$Sswig$S*_java_wrap.$O
 	-$(DEL) $(LIB_DIR)$S$(LIB_PREFIX)jni*.$(JNI_LIB_EXT)
 	-$(DEL) $(LIB_DIR)$S*.jar
+	-$(DELREC) temp_java
+
+###################
+## Maven package ##
+###################
+$(TEMP_JAVA_DIR):
+	-$(MKDIR) $(TEMP_JAVA_DIR)
+
+$(TEMP_JAVA_DIR)/ortools-java: | $(TEMP_JAVA_DIR)
+	-$(MKDIR) $(TEMP_JAVA_DIR)$Sortools-java
+
+$(TEMP_JAVA_DIR)/ortools-$(NATIVE_IDENTIFIER): | $(TEMP_JAVA_DIR)
+	-$(MKDIR) $(TEMP_JAVA_DIR)$Sortools-$(NATIVE_IDENTIFIER)
+
+package_java_pimpl: java_package
+
+$(TEMP_JAVA_DIR)/ortools-$(NATIVE_IDENTIFIER)/pom.xml: \
+ ${SRC_DIR}/ortools/java/pom-native.xml.in \
+ | $(TEMP_JAVA_DIR)/ortools-$(NATIVE_IDENTIFIER)
+	$(SED) -e "s/@PROJECT_VERSION@/$(OR_TOOLS_VERSION)/" \
+ ortools$Sjava$Spom-native.xml.in \
+ > $(TEMP_JAVA_DIR)$Sortools-$(NATIVE_IDENTIFIER)$Spom.xml
+	$(SED) -i -e 's/@JAVA_PACKAGE@/.../' \
+ $(TEMP_JAVA_DIR)$Sortools-$(NATIVE_IDENTIFIER)$Spom.xml
+	$(SED) -i -e 's/@JAVA_NATIVE_PROJECT@/.../' \
+ $(TEMP_JAVA_DIR)$Sortools-$(NATIVE_IDENTIFIER)$Spom.xml
+
+java_runtime: \
+ java \
+ $(TEMP_JAVA_DIR)/ortools-$(NATIVE_IDENTIFIER)/pom.xml
+	$(MKDIR_P) $(TEMP_JAVA_DIR)$Sortools-$(NATIVE_IDENTIFIER)$Ssrc$Smain$Sresources$S$(NATIVE_IDENTIFIER)
+	$(COPY) $(JAVA_OR_TOOLS_NATIVE_LIBS) $(TEMP_JAVA_DIR)$Sortools-$(NATIVE_IDENTIFIER)$Ssrc$Smain$Sresources$S$(NATIVE_IDENTIFIER)
+ifeq ($(SYSTEM),unix)
+	$(COPY) $(OR_TOOLS_LIBS) $(TEMP_JAVA_DIR)$Sortools-$(NATIVE_IDENTIFIER)$Ssrc$Smain$Sresources$S$(NATIVE_IDENTIFIER)
+endif
+	"$(MVN_BIN)" compile
+	"$(MVN_BIN)" package
+	"$(MVN_BIN)" install
+
+
+$(TEMP_JAVA_DIR)/ortools-java/pom.xml: \
+ ${SRC_DIR}/ortools/java/pom-local.xml.in \
+ | $(TEMP_JAVA_DIR)/ortools-java
+	$(SED) -e "s/@PROJECT_VERSION@/$(OR_TOOLS_VERSION)/" \
+ ortools$Sjava$Spom-local.xml.in \
+ > $(TEMP_JAVA_DIR)$Sortools-java$Spom.xml
+	$(SED) -i -e 's/@JAVA_PACKAGE@/.../' \
+ $(TEMP_JAVA_DIR)$Sortools-java$Spom.xml
+	$(SED) -i -e 's/@JAVA_NATIVE_PROJECT@/.../' \
+ $(TEMP_JAVA_DIR)$Sortools-java$Spom.xml
+	$(SED) -i -e 's/@JAVA_PROJECT@/.../' \
+ $(TEMP_JAVA_DIR)$Sortools-java$Spom.xml
+
+java_package: \
+ java_runtime \
+ $(TEMP_JAVA_DIR)/ortools-java/pom.xml
+	$(COPYREC) $(SRC_DIR)$Sortools$Sjava$Scom $(TEMP_JAVA_DIR)$Sortools-java$Ssrc$Smain$Scom
+	$(COPYREC) $(GEN_PATH)$Sjava$Scom $(TEMP_JAVA_DIR)$Sortools-java$Ssrc$Smain$Scom
+	$(COPY) $(SRC_DIR)$Sortools$Sjava$SLoader.java $(TEMP_JAVA_DIR)$Sortools-java$Ssrc$Smain$Sjava$Scom$Sgoogle$Sortools
+	"$(MVN_BIN)" compile
+	"$(MVN_BIN)" package
+	"$(MVN_BIN)" install
 
 #############
 ##  DEBUG  ##
@@ -614,6 +695,10 @@ detect_java:
 	@echo JAVA_OR_TOOLS_LIBS = $(JAVA_OR_TOOLS_LIBS)
 	@echo SWIG_BINARY = $(SWIG_BINARY)
 	@echo SWIG_INC = $(SWIG_INC)
+	@echo MVN_BIN = $(MVN_BIN)
+	@echo JAVA_ORTOOLS_PACKAGE = $(JAVA_ORTOOLS_PACKAGE)
+	@echo JAVA_ORTOOLS_NATIVE_PROJECT = $(JAVA_ORTOOLS_NATIVE_PROJECT)
+	@echo JAVA_ORTOOLS_PROJECT = $(JAVA_ORTOOLS_PROJECT)
 ifeq ($(SYSTEM),win)
 	@echo off & echo(
 else
