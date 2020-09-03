@@ -74,6 +74,8 @@ endif
 JAVA_ORTOOLS_PACKAGE := com.google.ortools
 JAVA_ORTOOLS_NATIVE_PROJECT := ortools-$(NATIVE_IDENTIFIER)
 JAVA_ORTOOLS_PROJECT := ortools-java
+JAVA_NATIVE_PATH := $(TEMP_JAVA_DIR)$S$(JAVA_ORTOOLS_NATIVE_PROJECT)$Ssrc$Smain
+JAVA_PATH := $(TEMP_JAVA_DIR)$S$(JAVA_ORTOOLS_PROJECT)$Ssrc$Smain
 
 $(GEN_DIR)/java/com/google/ortools/algorithms:
 	-$(MKDIR_P) $(GEN_PATH)$Sjava$Scom$Sgoogle$Sortools$Salgorithms
@@ -645,14 +647,14 @@ $(TEMP_JAVA_DIR)/ortools-$(NATIVE_IDENTIFIER)/pom.xml: \
 java_runtime: \
  java \
  $(TEMP_JAVA_DIR)/ortools-$(NATIVE_IDENTIFIER)/pom.xml
-	$(MKDIR_P) $(TEMP_JAVA_DIR)$Sortools-$(NATIVE_IDENTIFIER)$Ssrc$Smain$Sresources$S$(NATIVE_IDENTIFIER)
-	$(COPY) $(JAVA_OR_TOOLS_NATIVE_LIBS) $(TEMP_JAVA_DIR)$Sortools-$(NATIVE_IDENTIFIER)$Ssrc$Smain$Sresources$S$(NATIVE_IDENTIFIER)
+	$(MKDIR_P) $(JAVA_NATIVE_PATH)$Sresources$S$(NATIVE_IDENTIFIER)
+	$(COPY) $(JAVA_OR_TOOLS_NATIVE_LIBS) $(JAVA_NATIVE_PATH)$Sresources$S$(NATIVE_IDENTIFIER)
 ifeq ($(SYSTEM),unix)
-	$(COPY) $(OR_TOOLS_LIBS) $(TEMP_JAVA_DIR)$Sortools-$(NATIVE_IDENTIFIER)$Ssrc$Smain$Sresources$S$(NATIVE_IDENTIFIER)
+	$(COPY) $(OR_TOOLS_LIBS) $(JAVA_NATIVE_PATH)$Sresources$S$(NATIVE_IDENTIFIER)
 endif
-	"$(MVN_BIN)" compile
-	"$(MVN_BIN)" package
-	"$(MVN_BIN)" install
+	cd $(TEMP_JAVA_DIR)$Sortools-$(NATIVE_IDENTIFIER) && "$(MVN_BIN)" compile
+	cd $(TEMP_JAVA_DIR)$Sortools-$(NATIVE_IDENTIFIER) && "$(MVN_BIN)" package
+	cd $(TEMP_JAVA_DIR)$Sortools-$(NATIVE_IDENTIFIER) && "$(MVN_BIN)" install
 
 
 $(TEMP_JAVA_DIR)/ortools-java/pom.xml: \
@@ -671,12 +673,13 @@ $(TEMP_JAVA_DIR)/ortools-java/pom.xml: \
 java_package: \
  java_runtime \
  $(TEMP_JAVA_DIR)/ortools-java/pom.xml
-	$(COPYREC) $(SRC_DIR)$Sortools$Sjava$Scom $(TEMP_JAVA_DIR)$Sortools-java$Ssrc$Smain$Scom
-	$(COPYREC) $(GEN_PATH)$Sjava$Scom $(TEMP_JAVA_DIR)$Sortools-java$Ssrc$Smain$Scom
-	$(COPY) $(SRC_DIR)$Sortools$Sjava$SLoader.java $(TEMP_JAVA_DIR)$Sortools-java$Ssrc$Smain$Sjava$Scom$Sgoogle$Sortools
-	"$(MVN_BIN)" compile
-	"$(MVN_BIN)" package
-	"$(MVN_BIN)" install
+	$(MKDIR_P) $(JAVA_PATH)
+	$(COPYREC) $(SRC_DIR)$Sortools$Sjava$Scom $(JAVA_PATH)$Sjava
+	$(COPYREC) $(GEN_PATH)$Sjava$Scom $(JAVA_PATH)$Sjava
+	$(COPY) $(SRC_DIR)$Sortools$Sjava$SLoader.java $(JAVA_PATH)$Sjava$Scom$Sgoogle$Sortools
+	cd $(TEMP_JAVA_DIR)$Sortools-java && "$(MVN_BIN)" compile
+	cd $(TEMP_JAVA_DIR)$Sortools-java && "$(MVN_BIN)" package
+	cd $(TEMP_JAVA_DIR)$Sortools-java && "$(MVN_BIN)" install
 
 #############
 ##  DEBUG  ##
