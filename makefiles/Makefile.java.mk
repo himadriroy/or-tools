@@ -26,6 +26,9 @@ HAS_JAVA =
 endif
 
 TEMP_JAVA_DIR = temp_java
+JAVA_OR_TOOLS_LIBS := $(LIB_DIR)/com.google.ortools$J
+JAVA_OR_TOOLS_NATIVE_LIBS := $(LIB_DIR)/$(LIB_PREFIX)jniortools.$(JNI_LIB_EXT)
+JAVAFLAGS := -Djava.library.path=$(LIB_DIR)
 
 # Main target
 .PHONY: java # Build Java OR-Tools.
@@ -68,9 +71,6 @@ else
 endif
 
 # All libraries and dependencies
-JAVA_OR_TOOLS_LIBS := $(LIB_DIR)/com.google.ortools$J
-JAVA_OR_TOOLS_NATIVE_LIBS := $(LIB_DIR)/$(LIB_PREFIX)jniortools.$(JNI_LIB_EXT)
-JAVAFLAGS := -Djava.library.path=$(LIB_DIR)
 JAVA_ORTOOLS_PACKAGE := com.google.ortools
 JAVA_ORTOOLS_NATIVE_PROJECT := ortools-$(NATIVE_IDENTIFIER)
 JAVA_ORTOOLS_PROJECT := ortools-java
