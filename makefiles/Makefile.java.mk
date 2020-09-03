@@ -639,9 +639,9 @@ $(TEMP_JAVA_DIR)/ortools-$(NATIVE_IDENTIFIER)/pom.xml: \
 	$(SED) -e "s/@PROJECT_VERSION@/$(OR_TOOLS_VERSION)/" \
  ortools$Sjava$Spom-native.xml.in \
  > $(TEMP_JAVA_DIR)$Sortools-$(NATIVE_IDENTIFIER)$Spom.xml
-	$(SED) -i -e 's/@JAVA_PACKAGE@/.../' \
+	$(SED) -i -e 's/@JAVA_PACKAGE@/$(JAVA_ORTOOLS_PACKAGE)/' \
  $(TEMP_JAVA_DIR)$Sortools-$(NATIVE_IDENTIFIER)$Spom.xml
-	$(SED) -i -e 's/@JAVA_NATIVE_PROJECT@/.../' \
+	$(SED) -i -e 's/@JAVA_NATIVE_PROJECT@/$(JAVA_ORTOOLS_NATIVE_PROJECT)/' \
  $(TEMP_JAVA_DIR)$Sortools-$(NATIVE_IDENTIFIER)$Spom.xml
 
 java_runtime: \
@@ -663,19 +663,18 @@ $(TEMP_JAVA_DIR)/ortools-java/pom.xml: \
 	$(SED) -e "s/@PROJECT_VERSION@/$(OR_TOOLS_VERSION)/" \
  ortools$Sjava$Spom-local.xml.in \
  > $(TEMP_JAVA_DIR)$Sortools-java$Spom.xml
-	$(SED) -i -e 's/@JAVA_PACKAGE@/.../' \
+	$(SED) -i -e 's/@JAVA_PACKAGE@/$(JAVA_ORTOOLS_PACKAGE)/' \
  $(TEMP_JAVA_DIR)$Sortools-java$Spom.xml
-	$(SED) -i -e 's/@JAVA_NATIVE_PROJECT@/.../' \
+	$(SED) -i -e 's/@JAVA_NATIVE_PROJECT@/$(JAVA_ORTOOLS_NATIVE_PROJECT)/' \
  $(TEMP_JAVA_DIR)$Sortools-java$Spom.xml
-	$(SED) -i -e 's/@JAVA_PROJECT@/.../' \
+	$(SED) -i -e 's/@JAVA_PROJECT@/$(JAVA_ORTOOLS_PROJECT)/' \
  $(TEMP_JAVA_DIR)$Sortools-java$Spom.xml
 
 java_package: \
  java_runtime \
  $(TEMP_JAVA_DIR)/ortools-java/pom.xml
-	$(MKDIR_P) $(JAVA_PATH)
-	$(COPYREC) $(SRC_DIR)$Sortools$Sjava$Scom $(JAVA_PATH)$Sjava
-	$(COPYREC) $(GEN_PATH)$Sjava$Scom $(JAVA_PATH)$Sjava
+	$(MKDIR_P) $(JAVA_PATH)$Sjava
+	$(COPYREC) $(SRC_DIR)$Sortools$Sjava$Scom $(GEN_PATH)$Sjava$Scom $(JAVA_PATH)$Sjava
 	$(COPY) $(SRC_DIR)$Sortools$Sjava$SLoader.java $(JAVA_PATH)$Sjava$Scom$Sgoogle$Sortools
 	cd $(TEMP_JAVA_DIR)$Sortools-java && "$(MVN_BIN)" compile
 	cd $(TEMP_JAVA_DIR)$Sortools-java && "$(MVN_BIN)" package
